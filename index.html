@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SANTHIVELY SITHI VINAYAGAR VIDYALAYAM | School Census Dashboard 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --primary: #0f3d5c;
+  --primary-light: #1b6ea8;
+  --accent: #e08e2b;
+  --success: #2f9e5c;
+  --danger: #d94f4f;
+  --bg: #f4f7fa;
+  --card: #ffffff;
+  --text: #1c2733;
+  --text-muted: #6b7a8a;
+  --border: #e1e8ee;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  padding-bottom: 3rem;
+}
+header.hero {
+  background: linear-gradient(135deg, #0f3d5c 0%, #1b6ea8 100%);
+  color: #fff;
+  padding: 2.5rem 1.5rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+header.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,.08) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(255,255,255,.06) 0%, transparent 50%);
+}
+header.hero .content { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
+header.hero h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .35rem; }
+header.hero p { opacity: .9; font-size: .95rem; }
+.hero-meta {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1.5rem;
+  margin-top: 1.25rem; font-size: .85rem; opacity: .95;
+}
+.hero-meta span { display: flex; align-items: center; gap: .4rem; }
+.container { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
+
+nav.tabs {
+  display: flex; overflow-x: auto; gap: .4rem; padding: 1rem 1.25rem 0;
+  max-width: 1100px; margin: 0 auto; scrollbar-width: thin;
+}
+.tab-btn {
+  flex-shrink: 0; padding: .6rem 1.1rem; border-radius: 8px 8px 0 0;
+  background: #e6edf3; color: var(--text-muted); border: none; cursor: pointer;
+  font-size: .85rem; font-weight: 600; transition: all .2s; white-space: nowrap;
+}
+.tab-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 -2px 6px rgba(0,0,0,.05); }
+.tab-btn:hover:not(.active) { background: #dde7ee; }
+
+section.panel { display: none; padding-top: 1.25rem; }
+section.panel.active { display: block; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+  gap: 1rem; margin-bottom: 1.5rem;
+}
+.stat-card {
+  background: var(--card); border-radius: 12px; padding: 1.1rem 1.25rem;
+  border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  display: flex; flex-direction: column; gap: .3rem;
+}
+.stat-card .icon { font-size: 1.3rem; color: var(--primary-light); margin-bottom: .15rem; }
+.stat-card .label { font-size: .78rem; color: var(--text-muted); }
+.stat-card .value { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+
+.card {
+  background: var(--card); border-radius: 12px; border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,.05); margin-bottom: 1.25rem; overflow: hidden;
+}
+.card-header {
+  padding: .9rem 1.25rem; border-bottom: 1px solid var(--border);
+  background: #f8fafc; font-weight: 600; color: var(--primary); font-size: .98rem;
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap;
+}
+.card-body { padding: 1.25rem; }
+
+.charts-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+  gap: 1.25rem; margin-bottom: 1.25rem;
+}
+.chart-container { position: relative; height: 280px; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th, td { padding: .55rem .75rem; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { background: #f8fafc; color: var(--primary); font-weight: 600; position: sticky; top:0; }
+td:first-child, th:first-child { text-align: left; position: sticky; left: 0; background: inherit; }
+tbody tr:hover { background: #f7fafc; }
+tr.total-row td { font-weight: 700; background: #eef4f9; }
+.badge-pill {
+  display: inline-block; padding: .15rem .55rem; border-radius: 999px;
+  font-size: .72rem; font-weight: 600; background: #dbeafe; color: #1e40af;
+}
+.badge-male { background:#dbeafe; color:#1e40af; }
+.badge-female { background:#fce7f3; color:#9d174d; }
+
+.info-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: .9rem;
+}
+.info-item { padding: .75rem 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border); }
+.info-item .k { font-size: .75rem; color: var(--text-muted); margin-bottom:.2rem; }
+.info-item .v { font-size: .92rem; font-weight: 600; color: var(--text); }
+
+.legend-note { font-size: .78rem; color: var(--text-muted); margin-top: .5rem; }
+
+.declaration-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 1rem;
+}
+.decl-card {
+  background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 1rem;
+}
+.decl-card h4 { color: var(--primary); font-size: .85rem; margin-bottom: .5rem; }
+.decl-card p { font-size: .85rem; margin-bottom: .2rem; }
+.decl-card .role { color: var(--text-muted); font-size: .78rem; }
+
+footer {
+  text-align: center; padding: 2rem 1rem 1rem; color: var(--text-muted); font-size: .8rem;
+}
+
+@media (max-width: 600px) {
+  header.hero h1 { font-size: 1.25rem; }
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="content">
+    <h1><i class="fas fa-school"></i> SANTHIVELY SITHI VINAYAGAR VIDYALAYAM</h1>
+    <p>School Census Data Report — 2026 · Interactive Dashboard</p>
+    <div class="hero-meta">
+      <span><i class="fas fa-hashtag"></i> Census No: 14040</span>
+      <span><i class="fas fa-map-marker-alt"></i> Santhiveli, Murakodanchenai</span>
+      <span><i class="fas fa-map"></i> Batticaloa District, Eastern Province</span>
+      <span><i class="fas fa-layer-group"></i> Zone: Kalkudah · Division: Koralai Pattu</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab-btn active" data-panel="overview"><i class="fas fa-chart-pie"></i> Overview</button>
+  <button class="tab-btn" data-panel="grade611"><i class="fas fa-users"></i> Grade 6–11</button>
+  <button class="tab-btn" data-panel="al"><i class="fas fa-graduation-cap"></i> AL (12–13)</button>
+  <button class="tab-btn" data-panel="subjects"><i class="fas fa-book"></i> Subjects</button>
+  <button class="tab-btn" data-panel="baskets"><i class="fas fa-layer-group"></i> Baskets (10–11)</button>
+  <button class="tab-btn" data-panel="info"><i class="fas fa-info-circle"></i> School Info</button>
+  <button class="tab-btn" data-panel="declaration"><i class="fas fa-file-signature"></i> Declaration</button>
+</nav>
+
+<div class="container">
+
+  <!-- ==================== OVERVIEW ==================== -->
+  <section class="panel active" id="panel-overview">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="icon"><i class="fas fa-users"></i></div><div class="label">Total Students (Gr 6–11)</div><div class="value">535</div></div>
+      <div class="stat-card"><div class="icon"><i class="fas fa-user-graduate"></i></div><div class="label">Total AL Students (Gr 12–13)</div><div class="value">104</div></div>
+      <div class="stat-card"><div class="icon"><i class="fas fa-school"></i></div><div class="label">Grade Span</div><div class="value" style="font-size:1.1rem;">6 – 13</div></div>
+      <div class="stat-card"><div class="icon"><i class="fas fa-chalkboard"></i></div><div class="label">Total Classes (Gr 6–11)</div><div class="value">16</div></div>
+      <div class="stat-card"><div class="icon"><i class="fas fa-mars"></i></div><div class="label">Male Students (Gr 6–11)</div><div class="value">270</div></div>
+      <div class="stat-card"><div class="icon"><i class="fas fa-venus"></i></div><div class="label">Female Students (Gr 6–11)</div><div class="value">265</div></div>
+      <div class="stat-card"><div class="icon"><i class="fas fa-language"></i></div><div class="label">Medium of Instruction</div><div class="value" style="font-size:1rem;">Tamil Only</div></div>
+      <div class="stat-card"><div class="icon"><i class="fas fa-venus-mars"></i></div><div class="label">Overall Gender Ratio</div><div class="value" style="font-size:1rem;">50.5% M / 49.5% F</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header">Students by Grade (6–13)</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartByGrade"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Male vs Female — Grade 6–11</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartGenderDonut"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header">Grade 12 & 13 — Subject Stream Enrolment</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartALStream"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Grade 6–9 Religion Distribution</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartReligion"></canvas></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== GRADE 6-11 ==================== -->
+  <section class="panel" id="panel-grade611">
+    <div class="card">
+      <div class="card-header">Grade 6–11 Students by Medium and Gender (Tamil Medium)</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Grade</th><th>Classes</th><th>Male</th><th>Female</th><th>Total</th></tr></thead>
+            <tbody id="grade611Body"></tbody>
+          </table>
+        </div>
+        <p class="legend-note">All instruction is in Tamil medium only; Sinhala and English medium columns are zero across all grades.</p>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header">Class Count per Grade</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartClasses"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Male vs Female by Grade</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartMFbyGrade"></canvas></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== AL 12-13 ==================== -->
+  <section class="panel" id="panel-al">
+    <div class="card">
+      <div class="card-header">Grade 12 — Advanced Level Students by Subject Stream</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Stream</th><th>Classes</th><th>Male</th><th>Female</th><th>Total</th></tr></thead>
+            <tbody id="grade12Body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Grade 13 — Advanced Level Students by Subject Stream</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Stream</th><th>Classes</th><th>Male</th><th>Female</th><th>Total</th></tr></thead>
+            <tbody id="grade13Body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header">Grade 12 vs Grade 13 — Stream Comparison</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartALCompare"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">AL Science Subjects (Grade 12–13)</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartALScience"></canvas></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">AL Language & Art/Commerce Totals</div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><div class="k">Tamil Language (Gr 12 / Gr 13)</div><div class="v">39 / 20</div></div>
+          <div class="info-item"><div class="k">AL Art/Commerce Total (Gr 12 / Gr 13)</div><div class="v">39 / 22</div></div>
+          <div class="info-item"><div class="k">AL Science Total (Gr 12 / Gr 13)</div><div class="v">36 / 45</div></div>
+          <div class="info-item"><div class="k">Religious (Art/Commerce stream) Total (Gr 12 / Gr 13)</div><div class="v">11 / 8</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SUBJECTS ==================== -->
+  <section class="panel" id="panel-subjects">
+    <div class="card">
+      <div class="card-header">Grade 6–9 — Religious Subjects</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Subject</th><th>Grade 6</th><th>Grade 7</th><th>Grade 8</th><th>Grade 9</th></tr></thead>
+            <tbody id="religionBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Grade 6–9 — Aesthetics Subjects</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Subject</th><th>Grade 6</th><th>Grade 7</th><th>Grade 8</th><th>Grade 9</th></tr></thead>
+            <tbody id="aestheticsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Grade 10–11 — Religion & Core Subjects</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Subject</th><th>Grade 10</th><th>Grade 11</th></tr></thead>
+            <tbody id="grade1011Body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header">Aesthetics Subject Popularity (Gr 6–9 combined)</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartAesthetics"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Grade 6–9 Other Core Subjects (per grade, all equal)</div>
+        <div class="card-body"><div class="chart-container"><canvas id="chartCoreSubjects"></canvas></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== BASKETS ==================== -->
+  <section class="panel" id="panel-baskets">
+    <div class="card">
+      <div class="card-header">Grade 10–11 — Basket 1 (Accounting, Geography, Civic, Second Language)</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Subject</th><th>Grade 10</th><th>Grade 11</th></tr></thead>
+            <tbody id="basket1Body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Grade 10–11 — Basket 2 (Aesthetics)</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Subject</th><th>Grade 10</th><th>Grade 11</th></tr></thead>
+            <tbody id="basket2Body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Grade 10–11 — Basket 3 (Technology / Practical)</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Subject</th><th>Grade 10</th><th>Grade 11</th></tr></thead>
+            <tbody id="basket3Body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Basket Totals Comparison</div>
+      <div class="card-body"><div class="chart-container"><canvas id="chartBaskets"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- ==================== SCHOOL INFO ==================== -->
+  <section class="panel" id="panel-info">
+    <div class="card">
+      <div class="card-header">Basic Information</div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><div class="k">Census ID</div><div class="v">14040</div></div>
+          <div class="info-item"><div class="k">School Name</div><div class="v">Santhively Sithi Vinayagar Vidyalayam</div></div>
+          <div class="info-item"><div class="k">Address</div><div class="v">Santhively, Murakodanchenai</div></div>
+          <div class="info-item"><div class="k">Province</div><div class="v">5 – Eastern</div></div>
+          <div class="info-item"><div class="k">District</div><div class="v">51 – Batticaloa</div></div>
+          <div class="info-item"><div class="k">Zone</div><div class="v">55102 – Kalkudah</div></div>
+          <div class="info-item"><div class="k">Education Division</div><div class="v">55131 – Koralai Pattu</div></div>
+          <div class="info-item"><div class="k">GN Division</div><div class="v">51|10|65|200 – Santhiveli</div></div>
+          <div class="info-item"><div class="k">Coordinates</div><div class="v">7.842255, 81.550041</div></div>
+          <div class="info-item"><div class="k">School Category</div><div class="v">Provincial School</div></div>
+          <div class="info-item"><div class="k">School Type</div><div class="v">1AB</div></div>
+          <div class="info-item"><div class="k">Grade Span</div><div class="v">Grade 6 – 13</div></div>
+          <div class="info-item"><div class="k">Medium of Instruction</div><div class="v">Tamil Only</div></div>
+          <div class="info-item"><div class="k">Special Education Unit</div><div class="v">Not Approved</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Location</div>
+      <div class="card-body">
+        <div id="map" style="height:320px;border-radius:10px;overflow:hidden;"></div>
+        <p class="legend-note">Approximate location based on reported coordinates (7.842255° N, 81.550041° E).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== DECLARATION ==================== -->
+  <section class="panel" id="panel-declaration">
+    <div class="card">
+      <div class="card-header">Declaration & Submission</div>
+      <div class="card-body">
+        <div class="declaration-grid">
+          <div class="decl-card">
+            <h4><i class="fas fa-user-edit"></i> Completed By</h4>
+            <p><strong>M. Nishanthan</strong></p>
+            <p class="role">Deputy Principal</p>
+            <p class="role"><i class="fas fa-envelope"></i> nizaan88@gmail.com</p>
+            <p class="role"><i class="fas fa-phone"></i> 0752801004</p>
+          </div>
+          <div class="decl-card">
+            <h4><i class="fas fa-laptop-code"></i> Computerized By</h4>
+            <p><strong>Rupika Packiyarajah</strong></p>
+            <p class="role">Development Officer</p>
+            <p class="role"><i class="fas fa-envelope"></i> rupika958@gmail.com</p>
+            <p class="role"><i class="fas fa-phone"></i> 0755713149</p>
+          </div>
+          <div class="decl-card">
+            <h4><i class="fas fa-stamp"></i> Certified By (Principal)</h4>
+            <p><strong>Mrs. T. Sureshkumar</strong></p>
+            <p class="role">Principal</p>
+            <p class="role"><i class="fas fa-envelope"></i> thushyapriya17@gmail.com</p>
+            <p class="role"><i class="fas fa-phone"></i> 0652055400</p>
+          </div>
+        </div>
+        <p class="legend-note mt-2" style="margin-top:1rem;">Report generated: 2026-09-17 08:39:15 · This is a computer-generated report reproduced interactively from the original School Census Data Report (Census No. 14040). For official use only.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  School Census Data Report 2026 · Census No. 14040 · Interactive dashboard built from the original PDF report
+</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const grade611 = [
+  { grade:'Grade 6', classes:3, male:48, female:44, total:92 },
+  { grade:'Grade 7', classes:3, male:48, female:45, total:93 },
+  { grade:'Grade 8', classes:3, male:66, female:63, total:129 },
+  { grade:'Grade 9', classes:2, male:43, female:38, total:81 },
+  { grade:'Grade 10', classes:2, male:32, female:34, total:66 },
+  { grade:'Grade 11', classes:3, male:33, female:41, total:74 },
+];
+
+const grade12 = [
+  { stream:'Bio Science', classes:1, male:0, female:10, total:10 },
+  { stream:'Physical Science', classes:1, male:2, female:1, total:3 },
+  { stream:'Arts', classes:2, male:17, female:33, total:50 },
+  { stream:'Commerce', classes:1, male:2, female:1, total:3 },
+];
+const grade13 = [
+  { stream:'Bio Science', classes:1, male:4, female:6, total:10 },
+  { stream:'Physical Science', classes:1, male:3, female:0, total:3 },
+  { stream:'Arts', classes:1, male:5, female:15, total:20 },
+  { stream:'Commerce', classes:1, male:2, female:3, total:5 },
+];
+
+const religion = [
+  { subject:'Saivanary Hinduism', g6:88, g7:88, g8:126, g9:80 },
+  { subject:'Christianity', g6:4, g7:5, g8:3, g9:1 },
+];
+
+const aesthetics = [
+  { subject:'Carnatic Music', g6:17, g7:34, g8:33, g9:10 },
+  { subject:'Art', g6:19, g7:20, g8:25, g9:27 },
+  { subject:'Bharatha Dancing', g6:29, g7:18, g8:20, g9:20 },
+  { subject:'Drama and Theatre', g6:27, g7:21, g8:51, g9:24 },
+];
+
+const grade1011Subjects = [
+  { subject:'Saivanary Hinduism', g10:58, g11:74 },
+  { subject:'Christianity', g10:8, g11:0 },
+  { subject:'Mathematics', g10:66, g11:74 },
+  { subject:'History', g10:66, g11:74 },
+  { subject:'Science', g10:66, g11:74 },
+];
+
+const basket1 = [
+  { subject:'Business & Accounting Studies', g10:10, g11:22 },
+  { subject:'Geography', g10:10, g11:17 },
+  { subject:'Civic Education', g10:46, g11:34 },
+  { subject:'Second Language (Sinhala)', g10:0, g11:1 },
+];
+const basket2 = [
+  { subject:'Carnatic Music', g10:14, g11:15 },
+  { subject:'Art', g10:22, g11:19 },
+  { subject:'Bharatha Dancing', g10:8, g11:19 },
+  { subject:'Drama and Theatre', g10:22, g11:21 },
+];
+const basket3 = [
+  { subject:'ICT', g10:17, g11:17 },
+  { subject:'Agriculture & Food Technology', g10:11, g11:20 },
+  { subject:'Home Economics', g10:0, g11:9 },
+  { subject:'Health & Physical Education', g10:19, g11:18 },
+  { subject:'Design & Construction Technology', g10:19, g11:10 },
+];
+
+const alScience = [
+  { subject:'Physics', g12:12, g13:12 },
+  { subject:'Chemistry', g12:12, g13:16 },
+  { subject:'Agricultural Science', g12:0, g13:4 },
+  { subject:'Biology', g12:9, g13:10 },
+  { subject:'Combined Mathematics', g12:3, g13:3 },
+];
+
+/* ---------------- TABS ---------------- */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+  });
+});
+
+/* ---------------- TABLE RENDERERS ---------------- */
+function fill(id, rows, cols, sumCols) {
+  const tbody = document.getElementById(id);
+  let html = rows.map(r => `<tr>${cols.map(c => `<td>${c.render ? c.render(r) : r[c.key]}</td>`).join('')}</tr>`).join('');
+  if (sumCols) {
+    const totals = {};
+    sumCols.forEach(k => totals[k] = rows.reduce((s,r)=>s+(r[k]||0),0));
+    html += `<tr class="total-row"><td>Total</td>${cols.slice(1).map(c => c.key && totals[c.key]!=null ? `<td>${totals[c.key]}</td>` : '<td></td>').join('')}</tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+fill('grade611Body', grade611, [
+  {key:'grade'}, {key:'classes'}, {key:'male'}, {key:'female'}, {key:'total'}
+], ['classes','male','female','total']);
+
+fill('grade12Body', grade12, [
+  {key:'stream'}, {key:'classes'}, {key:'male'}, {key:'female'}, {key:'total'}
+], ['classes','male','female','total']);
+
+fill('grade13Body', grade13, [
+  {key:'stream'}, {key:'classes'}, {key:'male'}, {key:'female'}, {key:'total'}
+], ['classes','male','female','total']);
+
+fill('religionBody', religion, [
+  {key:'subject'}, {key:'g6'}, {key:'g7'}, {key:'g8'}, {key:'g9'}
+], ['g6','g7','g8','g9']);
+
+fill('aestheticsBody', aesthetics, [
+  {key:'subject'}, {key:'g6'}, {key:'g7'}, {key:'g8'}, {key:'g9'}
+], ['g6','g7','g8','g9']);
+
+fill('grade1011Body', grade1011Subjects, [
+  {key:'subject'}, {key:'g10'}, {key:'g11'}
+]);
+
+fill('basket1Body', basket1, [
+  {key:'subject'}, {key:'g10'}, {key:'g11'}
+], ['g10','g11']);
+
+fill('basket2Body', basket2, [
+  {key:'subject'}, {key:'g10'}, {key:'g11'}
+], ['g10','g11']);
+
+fill('basket3Body', basket3, [
+  {key:'subject'}, {key:'g10'}, {key:'g11'}
+], ['g10','g11']);
+
+/* ---------------- CHARTS ---------------- */
+const palette = ['#1b6ea8','#e08e2b','#2f9e5c','#d94f4f','#7c5cbf','#0f3d5c','#38b6ff','#f4a259'];
+
+new Chart(document.getElementById('chartByGrade'), {
+  type: 'bar',
+  data: {
+    labels: [...grade611.map(g=>g.grade), 'Grade 12','Grade 13'],
+    datasets: [{
+      label: 'Total Students',
+      data: [...grade611.map(g=>g.total), 66, 38],
+      backgroundColor: palette[0]
+    }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+});
+
+new Chart(document.getElementById('chartGenderDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Male','Female'],
+    datasets: [{ data:[270,265], backgroundColor:['#1b6ea8','#e08e2b'] }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
+});
+
+new Chart(document.getElementById('chartALStream'), {
+  type: 'bar',
+  data: {
+    labels: ['Bio Science','Physical Science','Arts','Commerce'],
+    datasets: [
+      { label:'Grade 12', data: grade12.map(s=>s.total), backgroundColor: palette[0] },
+      { label:'Grade 13', data: grade13.map(s=>s.total), backgroundColor: palette[1] }
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true}} }
+});
+
+new Chart(document.getElementById('chartReligion'), {
+  type: 'pie',
+  data: {
+    labels: ['Saivanary Hinduism','Christianity'],
+    datasets: [{
+      data: [88+88+126+80, 4+5+3+1],
+      backgroundColor: ['#1b6ea8','#d94f4f']
+    }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
+});
+
+new Chart(document.getElementById('chartClasses'), {
+  type: 'bar',
+  data: {
+    labels: grade611.map(g=>g.grade),
+    datasets: [{ label:'Classes', data: grade611.map(g=>g.classes), backgroundColor: palette[2] }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{stepSize:1}}} }
+});
+
+new Chart(document.getElementById('chartMFbyGrade'), {
+  type: 'bar',
+  data: {
+    labels: grade611.map(g=>g.grade),
+    datasets: [
+      { label:'Male', data: grade611.map(g=>g.male), backgroundColor: palette[0] },
+      { label:'Female', data: grade611.map(g=>g.female), backgroundColor: palette[1] }
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true}} }
+});
+
+new Chart(document.getElementById('chartALCompare'), {
+  type: 'radar',
+  data: {
+    labels: ['Bio Science','Physical Science','Arts','Commerce'],
+    datasets: [
+      { label:'Grade 12', data: grade12.map(s=>s.total), borderColor: palette[0], backgroundColor:'rgba(27,110,168,.2)' },
+      { label:'Grade 13', data: grade13.map(s=>s.total), borderColor: palette[1], backgroundColor:'rgba(224,142,43,.2)' }
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false }
+});
+
+new Chart(document.getElementById('chartALScience'), {
+  type: 'bar',
+  data: {
+    labels: alScience.map(s=>s.subject),
+    datasets: [
+      { label:'Grade 12', data: alScience.map(s=>s.g12), backgroundColor: palette[0] },
+      { label:'Grade 13', data: alScience.map(s=>s.g13), backgroundColor: palette[1] }
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, indexAxis:'y', scales:{x:{beginAtZero:true}} }
+});
+
+new Chart(document.getElementById('chartAesthetics'), {
+  type: 'bar',
+  data: {
+    labels: aesthetics.map(a=>a.subject),
+    datasets: [{
+      label:'Total (Gr 6–9)',
+      data: aesthetics.map(a=>a.g6+a.g7+a.g8+a.g9),
+      backgroundColor: palette.slice(0,4)
+    }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+});
+
+new Chart(document.getElementById('chartCoreSubjects'), {
+  type: 'line',
+  data: {
+    labels: ['Grade 6','Grade 7','Grade 8','Grade 9'],
+    datasets: [{
+      label: 'Students per core subject',
+      data: [92,93,129,81],
+      borderColor: palette[2], backgroundColor:'rgba(47,158,92,.15)', fill:true, tension:.3
+    }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true}} }
+});
+
+new Chart(document.getElementById('chartBaskets'), {
+  type: 'bar',
+  data: {
+    labels: ['Basket 1','Basket 2','Basket 3'],
+    datasets: [
+      { label:'Grade 10', data: [
+          basket1.reduce((s,r)=>s+r.g10,0),
+          basket2.reduce((s,r)=>s+r.g10,0),
+          basket3.reduce((s,r)=>s+r.g10,0)
+        ], backgroundColor: palette[0] },
+      { label:'Grade 11', data: [
+          basket1.reduce((s,r)=>s+r.g11,0),
+          basket2.reduce((s,r)=>s+r.g11,0),
+          basket3.reduce((s,r)=>s+r.g11,0)
+        ], backgroundColor: palette[1] }
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true}} }
+});
+
+/* ---------------- MAP (lightweight, no external tiles needed) ---------------- */
+function drawMap() {
+  const el = document.getElementById('map');
+  el.innerHTML = `<iframe
+    src="https://www.openstreetmap.org/export/embed.html?bbox=81.53%2C7.83%2C81.57%2C7.855&layer=mapnik&marker=7.842255%2C81.550041"
+    style="width:100%;height:100%;border:0;" loading="lazy"></iframe>`;
+}
+drawMap();
+</script>
+</body>
+</html>
